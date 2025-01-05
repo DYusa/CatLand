@@ -12,7 +12,7 @@ class CatGame
     const int TerrainSlots = 5;
 
     // Game Variables
-    List<string> Rounds = new List<string>() { "Round 1", "Round 2", "Round 3", "Round 4", "Round 5", "Round 6", "Round 7", "Round 8" };
+    List<string> Rounds = new List<string>() { "Round 1", "Round 2", "Round 3", "Round 4" };
     Stack<string> AvailableRounds = new Stack<string>();
     List<Player> Players = new List<Player>();
     List<Card> CatCards = new List<Card>();
@@ -31,7 +31,7 @@ class CatGame
         Random rnd = new Random();
         for (int i = 0; i < CatCardCount; i++)
         {
-            int foodRequirement = rnd.Next(1, 4);
+            int foodRequirement = rnd.Next(0, 4); // Food requirement from 0 to 3
             CatCards.Add(new Card("Cat", i + 1, foodRequirement));
         }
 
@@ -111,6 +111,7 @@ class Player
 {
     public string Name { get; set; }
     public int Score { get; private set; }
+    private List<Card> CollectedFood = new List<Card>();
 
     public Player(string name)
     {
@@ -126,6 +127,11 @@ class Player
         switch (action)
         {
             case 0:
+                if (catCards.Count == 0)
+                {
+                    Console.WriteLine("You must have at least one cat card to place a cat.");
+                    break;
+                }
                 PlaceCat(terrains, catCards);
                 break;
             case 1:
@@ -162,12 +168,6 @@ class Player
             return;
         }
 
-        if (!catCards.Any())
-        {
-            Console.WriteLine("No more cats available to place.");
-            return;
-        }
-
         var catCard = catCards.First();
         catCards.Remove(catCard);
         terrain.PlaceCat(catCard);
@@ -177,13 +177,24 @@ class Player
     void GetFood()
     {
         Console.WriteLine("Getting food...");
-        // Food collection logic here
+        int foodGathered = 0;
+
+        // Calculate food based on collected stuff and placed cats
+        foreach (var terrain in Terrains)
+        {
+            foodGathered += terrain.GetFoodBonus();
+        }
+
+        Score += foodGathered; // Increment score by food gathered
+        Console.WriteLine($"{Name} collected {foodGathered} food. Total Score: {Score}");
     }
 
     void CollectStuff()
     {
         Console.WriteLine("Collecting stuff...");
-        // Collection logic here
+        // Assume each collection gives one food item
+        // This can be adjusted as per game logic
+        CollectedFood.Add(new Card("Stuff", CollectedFood.Count + 1, 1)); // Placeholder for stuff logic
     }
 
     void RecruitCats(List<Card> catCards)
@@ -194,8 +205,9 @@ class Player
 
     public void CalculateScore()
     {
-        // Placeholder for score calculation logic
-        Score = new Random().Next(10, 100); // Temporary random score
+        // Calculate score based on collected food
+        Score += CollectedFood.Sum(card => card.FoodRequirement);
+        Console.WriteLine($"{Name} Final Score: {Score}");
     }
 }
 
@@ -235,6 +247,16 @@ class Terrain
         {
             placedCats.Add(cat);
         }
+    }
+
+    public int GetFoodBonus()
+    {
+        int foodBonus = 0;
+        foreach (var cat in placedCats)
+        {
+            foodBonus += 1; // Assuming each cat provides 1 food, can be adjusted
+        }
+        return foodBonus;
     }
 }
 
