@@ -1,0 +1,19 @@
+Game will include following action items, cards, end-round bonuses, and CATS.
+
+Main actions include hunting for food (wet, dry, human, and special); recruiting cats (neighbor, inside, wildern); and gathering (trashes, stealing, and flowerpots).
+
+Cat Card Count : 52.
+Bonus Card Count: 24.
+
+Max Player 3.
+
+Each round has less steps:
+1st round: 8, 2nd round: 7, 3rd round: 6; 4th round: 5.
+
+Round(random(a)) -> Out of 8 round possibilities selects one; and after removing that from the array 'a' where all 8th possibilities are kept to ensure no repetition.
+
+Scores will consist of toys above cards, food above cars, card points, bonus points, end-round points.
+
+Action types: Primary (Play cat, Steal, Claim Food, and Recruit Cats)
+
+Each step will rely on an array count of 6 for all 3 main terains. 
