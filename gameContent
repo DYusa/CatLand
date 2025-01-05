@@ -1,19 +1,75 @@
-Game will include following action items, cards, end-round bonuses, and CATS.
+CatGame
+CatGame is a C# console-based game where players participate in a series of rounds, collecting cat and bonus cards to achieve the highest score. The game mechanics include shuffling rounds, taking player actions, and calculating scores.
 
-Main actions include hunting for food (wet, dry, human, and special); recruiting cats (neighbor, inside, wildern); and gathering (trashes, stealing, and flowerpots).
+Features
+Player Interaction: Up to 3 players can participate, with individual actions influencing their scores.
+Rounds and Challenges: Play across 4 rounds with shuffled challenges to maintain unpredictability.
+Dynamic Scoring: Players accumulate scores through actions and random elements.
+Card Management: Cat and bonus cards enhance gameplay strategy.
+Prerequisites
+.NET 6.0 SDK or later installed on your system.
+A basic understanding of C# for extending or modifying the game.
+Setup Instructions
+Clone the repository:
 
-Cat Card Count : 52.
-Bonus Card Count: 24.
+bash
+Copy code
+git clone <repository-url>
+cd CatGame
+Build the project:
 
-Max Player 3.
+bash
+Copy code
+dotnet build
+Run the game:
 
-Each round has less steps:
-1st round: 8, 2nd round: 7, 3rd round: 6; 4th round: 5.
+bash
+Copy code
+dotnet run
+Usage
+Upon starting the game, players will be introduced to the gameplay rules.
+Each player will take turns performing actions during their respective steps.
+The game progresses through 4 rounds, each with its unique challenge and a dynamic number of steps.
+At the end of the game, final scores are calculated, and the winner is announced.
+Code Structure
+CatGame
+The main class orchestrates the game logic, including:
 
-Round(random(a)) -> Out of 8 round possibilities selects one; and after removing that from the array 'a' where all 8th possibilities are kept to ensure no repetition.
+Initialization:
+InitializeCards(): Prepares Cat and Bonus cards.
+ShuffleRounds(): Shuffles and stores rounds for gameplay.
+Gameplay:
+StartGame(): Sets up players and begins the game loop.
+PlayRound(int roundNumber): Executes logic for each round.
+CalculateFinalScores(): Determines and announces the winner.
+Player
+Represents individual players in the game, with methods for:
 
-Scores will consist of toys above cards, food above cars, card points, bonus points, end-round points.
+Actions: Placeholder logic for player actions.
+Scoring: Temporary random score generator for demonstration purposes.
+Card
+Defines the card structure with a Type (e.g., "Cat" or "Bonus") and ID.
 
-Action types: Primary (Play cat, Steal, Claim Food, and Recruit Cats)
+Program
+The entry point for the application, which initializes and starts the game.
 
-Each step will rely on an array count of 6 for all 3 main terains. 
+Future Enhancements
+Gameplay Depth:
+
+Introduce specific actions for players based on cards or challenges.
+Add detailed scoring rules tied to game mechanics.
+Multiplayer Support:
+
+Expand to online multiplayer using sockets or a web-based interface.
+User Interface:
+
+Develop a graphical UI for enhanced player experience.
+Customization:
+
+Allow users to configure game settings, such as player count and card types.
+Contributing
+Contributions are welcome! Please:
+
+Fork the repository.
+Create a new branch for your feature or bug fix.
+Submit a pull request with a detailed description of changes.
