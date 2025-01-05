@@ -111,6 +111,8 @@ class Player
 {
     public string Name { get; set; }
     public int Score { get; private set; }
+    private int foodCount = 0;
+    private int stuffCount = 0;
 
     public Player(string name)
     {
@@ -146,12 +148,17 @@ class Player
 
     void PlaceCat(Terrain[] terrains, List<Card> catCards)
     {
+        if (catCards.Count == 0)
+        {
+            Console.WriteLine("No more cats available to place.");
+            return;
+        }
+
         Console.WriteLine("Choose a terrain (0, 1, or 2):");
         int terrainIndex = int.Parse(Console.ReadLine());
         if (terrainIndex < 0 || terrainIndex >= terrains.Length)
         {
             Console.WriteLine("Invalid terrain. Try again.");
-            PlaceCat(terrains, catCards);
             return;
         }
 
@@ -162,28 +169,32 @@ class Player
             return;
         }
 
-        if (!catCards.Any())
+        var catCard = catCards.First();
+        int foodRequired = terrain.CatsCount + catCard.FoodRequirement;
+
+        if (foodCount < foodRequired)
         {
-            Console.WriteLine("No more cats available to place.");
+            Console.WriteLine($"Not enough food. You need {foodRequired} food to place this cat.");
             return;
         }
 
-        var catCard = catCards.First();
+        foodCount -= foodRequired;
         catCards.Remove(catCard);
         terrain.PlaceCat(catCard);
-        Console.WriteLine($"Placed Cat {catCard.ID} in Terrain {terrainIndex}.");
+        Console.WriteLine($"Placed Cat {catCard.ID} in Terrain {terrainIndex}. Remaining food: {foodCount}.");
     }
 
     void GetFood()
     {
-        Console.WriteLine("Getting food...");
-        // Food collection logic here
+        int foodGained = stuffCount;
+        foodCount += foodGained;
+        Console.WriteLine($"Collected {foodGained} food. Total food: {foodCount}.");
     }
 
     void CollectStuff()
     {
-        Console.WriteLine("Collecting stuff...");
-        // Collection logic here
+        stuffCount++;
+        Console.WriteLine($"Collected 1 stuff. Total stuff: {stuffCount}.");
     }
 
     void RecruitCats(List<Card> catCards)
@@ -217,6 +228,8 @@ class Terrain
 {
     private int capacity;
     private List<Card> placedCats;
+
+    public int CatsCount => placedCats.Count;
 
     public Terrain(int capacity)
     {
