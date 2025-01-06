@@ -200,7 +200,7 @@ class Player
         UpdateUnplacedCards();
     }
 
-   private void AdjustStartingResources()
+    private void AdjustStartingResources()
 {
     while (true)
     {
@@ -217,8 +217,17 @@ class Player
         }
 
         Console.WriteLine("Choose an adjustment:");
-        Console.WriteLine("0 - Remove Food, 1 - Remove Collection, 2 - Remove Card, 4 - Add Food, 5 - Add Collection");
+        Console.WriteLine("0 - Remove Food");
+        
+        Console.WriteLine("1 - Remove Collection");
+        
+        Console.WriteLine("2 - Remove Card");
+        
+        Console.WriteLine("3 - Add Food");
+        
+        Console.WriteLine("4 - Add Collection");
 
+        Console.WriteLine("--------------");
         int adjustment = int.Parse(Console.ReadLine());
         switch (adjustment)
         {
@@ -265,7 +274,7 @@ class Player
                     Console.WriteLine("No cards to remove.");
                 }
                 break;
-            case 4:
+            case 3:
                 if (FoodCount + Collections + Hand.Count < 10)
                 {
                     FoodCount++;
@@ -276,7 +285,7 @@ class Player
                     Console.WriteLine("Cannot exceed a total of 10 resources.");
                 }
                 break;
-            case 5:
+            case 4:
                 if (FoodCount + Collections + Hand.Count < 10)
                 {
                     Collections++;
@@ -303,135 +312,141 @@ class Player
             }
             else
             {
+                Console.WriteLine("-------------------------");
                 Console.WriteLine("Let's adjust your resources again.");
+                Console.WriteLine("-------------------------");
             }
         }
         else
         {
+            Console.WriteLine("-------------------------");
             Console.WriteLine("Your total resources must sum to 10. Please adjust.");
+            Console.WriteLine("-------------------------");
+            
         }
     }
 }
 
 
+    public void DisplayStatus()
+    {
+        Console.WriteLine($"Player: {Name}, Score: {Score}, Food: {FoodCount}, Collections: {Collections}, Cards in Hand: {Hand.Count}, Unplaced Cards: {UnplacedCards}");
+    }
+
     public void TakeAction(Terrain[] terrains, List<Card> catCards)
     {
-        Console.WriteLine($"{Name}, your cards:");
+        DisplayStatus();
+        Console.WriteLine($"{Name}, choose an action:");
+        Console.WriteLine("1 - Place a card in a terrain");
+        Console.WriteLine("2 - Collect food");
+        Console.WriteLine("3 - Draw a card");
+        
+        if (Hand.Count > 0)
+    {
+        Console.WriteLine("Cards in Hand:");
         foreach (var card in Hand)
         {
-            Console.WriteLine($"Cat Name: {card.Name}, Card ID: {card.ID}, Food Requirement: {card.FoodRequirement}");
+            Console.WriteLine($"Card ID: {card.ID}, Name: {card.Name}, Food Requirement: {card.FoodRequirement}");
         }
-        Console.WriteLine("Choose an action: 0 - Place Cat, 1 - Get Food, 2 - Collect Collections, 3 - Recruit Cats");
-        int action = int.Parse(Console.ReadLine());
+    }
+    else
+    {
+        Console.WriteLine("No cards in hand.");
+    }
 
+        int action = int.Parse(Console.ReadLine());
         switch (action)
         {
-            case 0:
-                PlaceCat(terrains);
-                break;
             case 1:
-                GetFood();
+                PlaceCardInTerrain(terrains);
                 break;
             case 2:
-                CollectCollections();
+                CollectFood();
                 break;
             case 3:
-                RecruitCats(catCards);
+                DrawCard(catCards);
                 break;
             default:
                 Console.WriteLine("Invalid action. Try again.");
-                TakeAction(terrains, catCards);
                 break;
         }
     }
 
-    public void DisplayStatus()
+    private void PlaceCardInTerrain(Terrain[] terrains)
+{
+    if (Hand.Count == 0)
     {
-        Console.WriteLine($"Status for {Name}:");
-        Console.WriteLine($"Food: {FoodCount}, Collections: {Collections}, Cards Placed: {CardsPlaced}, Unplaced Cards: {UnplacedCards}");
+        Console.WriteLine("No cards in hand to place.");
+        return;
     }
 
-
-    void PlaceCat(Terrain[] terrains)
+    // Display cards in hand
+    Console.WriteLine("Cards in Hand:");
+    foreach (var card in Hand)
     {
-        if (Hand.Count == 0)
-        {
-            Console.WriteLine("No more cards in hand to place.");
-            return;
-        }
-
-        Console.WriteLine("Choose a terrain (0, 1, or 2):");
-        int terrainIndex = int.Parse(Console.ReadLine());
-        if (terrainIndex < 0 || terrainIndex >= terrains.Length)
-        {
-            Console.WriteLine("Invalid terrain. Try again.");
-            return;
-        }
-
-        var terrain = terrains[terrainIndex];
-        if (!terrain.HasSpace())
-        {
-            Console.WriteLine("No space in this terrain. Try another action.");
-            return;
-        }
-
-        Console.WriteLine("Choose a card to place (enter card ID):");
-        int cardId = int.Parse(Console.ReadLine());
-        var card = Hand.FirstOrDefault(c => c.ID == cardId);
-        if (card == null)
-        {
-            Console.WriteLine("Invalid card ID. Try again.");
-            return;
-        }
-
-        if (card.FoodRequirement > FoodCount)
-        {
-            Console.WriteLine("Not enough food to place this card. Try another action.");
-            return;
-        }
-
-        FoodCount -= card.FoodRequirement;
-        Hand.Remove(card);
-        terrain.AddCard(card);
-        CardsPlaced++;
-        TerrainCards[terrainIndex]++;
-        UpdateUnplacedCards();
-
-        Console.WriteLine($"Card {card.ID} placed in Terrain {terrainIndex}.");
+        Console.WriteLine($"Card ID: {card.ID}, Name: {card.Name}, Food Requirement: {card.FoodRequirement}");
     }
 
-    void GetFood()
+    Console.WriteLine("Enter the ID of the card you want to place:");
+    int cardId = int.Parse(Console.ReadLine());
+    var cardToPlace = Hand.FirstOrDefault(c => c.ID == cardId);
+
+    if (cardToPlace == null)
+    {
+        Console.WriteLine("Invalid Card ID.");
+        return;
+    }
+
+    Console.WriteLine("Choose a terrain to place the card (0-4):");
+    int terrainIndex = int.Parse(Console.ReadLine());
+
+    if (terrainIndex < 0 || terrainIndex >= terrains.Length)
+    {
+        Console.WriteLine("Invalid terrain choice.");
+        return;
+    }
+
+    var terrain = terrains[terrainIndex];
+    if (!terrain.AddCard(cardToPlace))
+    {
+        Console.WriteLine("Terrain is full or does not meet the card's requirements.");
+        return;
+    }
+
+    Hand.Remove(cardToPlace);
+    TerrainCards[terrainIndex]++;
+    CardsPlaced++;
+    UpdateUnplacedCards();
+    Console.WriteLine($"Placed Card ID: {cardId}, Name: {cardToPlace.Name} in Terrain {terrainIndex}.");
+}
+
+
+    private void CollectFood()
     {
         FoodCount += 2;
-        Console.WriteLine($"{Name} collected 2 food. Total food: {FoodCount}");
+        Console.WriteLine("Collected 2 Food.");
     }
 
-    void CollectCollections()
-    {
-        Collections += 1;
-        Console.WriteLine($"{Name} collected 1 collection. Total collections: {Collections}");
-    }
-
-    void RecruitCats(List<Card> catCards)
+    private void DrawCard(List<Card> catCards)
     {
         if (catCards.Count == 0)
         {
-            Console.WriteLine("No more cards available to recruit.");
+            Console.WriteLine("No more cards to draw.");
             return;
         }
 
         Random rnd = new Random();
-        var newCard = catCards[rnd.Next(catCards.Count)];
-        Hand.Add(newCard);
-        catCards.Remove(newCard);
-        UpdateUnplacedCards();
+        var card = catCards[rnd.Next(catCards.Count)];
+        Hand.Add(card);
+        catCards.Remove(card);
 
-        Console.WriteLine($"{Name} recruited a new cat card: Cat {newCard.ID} - Food Requirement: {newCard.FoodRequirement}");
+        Console.WriteLine($"Drew Card ID: {card.ID}, Name: {card.Name}, Food Requirement: {card.FoodRequirement}");
+        UpdateUnplacedCards();
     }
 
     public int GetCardsInTerrain(int terrainIndex)
     {
-        return TerrainCards[terrainIndex];
+        return TerrainCards.ContainsKey(terrainIndex) ? TerrainCards[terrainIndex] : 0;
     }
 
     public void AddScore(int points)
@@ -439,7 +454,7 @@ class Player
         Score += points;
     }
 
-    void UpdateUnplacedCards()
+    private void UpdateUnplacedCards()
     {
         UnplacedCards = Hand.Count;
     }
@@ -447,13 +462,13 @@ class Player
 
 class Card
 {
-    public string Name { get; private set; } // Added property
+    public string Name { get; private set; }
     public int ID { get; private set; }
     public int FoodRequirement { get; private set; }
 
     public Card(string name, int id, int foodRequirement)
     {
-        Name = name; // Initialize the property
+        Name = name;
         ID = id;
         FoodRequirement = foodRequirement;
     }
@@ -461,28 +476,27 @@ class Card
 
 class Terrain
 {
-    private int MaxSlots;
+    private int Slots;
+    private int CollectionRequirement;
     private List<Card> PlacedCards;
-    public int CollectionRequirement { get; private set; } // Added property
 
-    public Terrain(int maxSlots, int collectionRequirement)
+    public Terrain(int slots, int collectionRequirement)
     {
-        MaxSlots = maxSlots;
-        CollectionRequirement = collectionRequirement; // Initialize the property
+        Slots = slots;
+        CollectionRequirement = collectionRequirement;
         PlacedCards = new List<Card>();
     }
 
-    public bool HasSpace()
+    public bool AddCard(Card card)
     {
-        return PlacedCards.Count < MaxSlots;
-    }
+        if (PlacedCards.Count >= Slots)
+            return false;
 
-    public void AddCard(Card card)
-    {
-        if (HasSpace())
-        {
-            PlacedCards.Add(card);
-        }
+        if (card.FoodRequirement > CollectionRequirement)
+            return false;
+
+        PlacedCards.Add(card);
+        return true;
     }
 }
 
@@ -490,12 +504,21 @@ class Program
 {
     static void Main(string[] args)
     {
-        Console.WriteLine("Enter number of players (2 or 3):");
-        int playerCount = int.Parse(Console.ReadLine());
-        if (playerCount < 2 || playerCount > 3)
+        int playerCount = 0;
+
+        while (true)
         {
-            Console.WriteLine("Invalid number of players. Defaulting to 2.");
-            playerCount = 2;
+            Console.WriteLine("Enter number of players (2 or 3):");
+            string input = Console.ReadLine();
+
+            if (int.TryParse(input, out playerCount) && (playerCount == 2 || playerCount == 3))
+            {
+                break; // Valid input, exit loop
+            }
+            else
+            {
+                Console.WriteLine("Invalid input. Please enter 2 or 3.");
+            }
         }
 
         CatGame game = new CatGame(playerCount);
