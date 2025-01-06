@@ -5,18 +5,25 @@ using System.Linq;
 class CatGame
 {
     // Constants
+    public const int CatCardCount = 52;
     const int TotalRounds = 4;
-    const int CatCardCount = 52;
-    const int BonusCardCount = 24;
     const int TerrainSlots = 5;
 
     // Game Variables
-    List<string> Challenges = new List<string>() { "Most Collections", "Most Food", "Most Cards Placed", "Most Cards in Terrain 1", "Most Cards in Terrain 2", "Most Cards in Terrain 3", "Most Unplaced Cards" };
+    List<string> Challenges = new List<string>()
+    {
+        "Most Collections",
+        "Most Food",
+        "Most Cards Placed",
+        "Most Cards in Terrain 1",
+        "Most Cards in Terrain 2",
+        "Most Cards in Terrain 3",
+        "Most Unplaced Cards"
+    };
     Stack<string> AvailableChallenges = new Stack<string>();
     List<Player> Players = new List<Player>();
     List<Card> CatCards = new List<Card>();
-    List<Card> BonusCards = new List<Card>();
-    Terrain[] Terrains = new Terrain[3];
+    Terrain[] Terrains = new Terrain[5];
 
     public CatGame(int playerCount)
     {
@@ -28,24 +35,33 @@ class CatGame
 
     void InitializeCards()
     {
+        string[] catNames = {
+            "Stray Cat", "Tabby Cat", "Fat Cat", "Norwegian Forest Cat", "Siamese Cat",
+            "Maine Coon", "Persian Cat", "Ragdoll Cat", "Bengal Cat", "Sphynx Cat",
+            "Scottish Fold", "British Shorthair", "Abyssinian Cat", "Russian Blue", "Birman Cat",
+            "Himalayan Cat", "Turkish Van", "Egyptian Mau", "Oriental Cat", "Devon Rex",
+            "Cornish Rex", "Savannah Cat", "Manx Cat", "Balinese Cat", "Singapura Cat",
+            "Burmese Cat", "Exotic Shorthair", "Chartreux Cat", "Birman Cat", "American Shorthair",
+            "Japanese Bobtail", "Somali Cat", "Tonkinese Cat", "Turkish Angora", "Cymric Cat",
+            "Singapura Cat", "LaPerm Cat", "Munchkin Cat", "Snowshoe Cat", "Australian Mist",
+            "Korat Cat", "Peterbald Cat", "Selkirk Rex", "Singapura Cat", "Turkish Angora",
+            "Javanese Cat", "Havana Brown", "Burmilla Cat", "Ocicat", "Khao Manee",
+            "Chausie Cat", "Maine Coon", "American Curl", "Manx Cat", "Bengal Cat"
+        };
+
         Random rnd = new Random();
         for (int i = 0; i < CatCardCount; i++)
         {
-            int foodRequirement = rnd.Next(1, 4);
-            CatCards.Add(new Card("Cat", i + 1, foodRequirement));
-        }
-
-        for (int i = 0; i < BonusCardCount; i++)
-        {
-            BonusCards.Add(new Card("Bonus", i + 1, 0));
+            int foodRequirement = rnd.Next(1, 4); // Random food requirement between 1 and 3
+            CatCards.Add(new Card(catNames[i], i + 1, foodRequirement));
         }
     }
 
     void InitializeTerrains()
     {
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < 5; i++)
         {
-            Terrains[i] = new Terrain(TerrainSlots);
+            Terrains[i] = new Terrain(TerrainSlots, i < 2 ? 0 : i < 4 ? 1 : 2); // Collection requirement: 0, 1, or 2
         }
     }
 
@@ -63,7 +79,9 @@ class CatGame
     {
         for (int i = 0; i < playerCount; i++)
         {
-            Players.Add(new Player($"Player {i + 1}"));
+            var player = new Player($"Player {i + 1}");
+            player.InitializeStartingResources(CatCards);
+            Players.Add(player);
         }
     }
 
@@ -92,6 +110,7 @@ class CatGame
         {
             foreach (var player in Players)
             {
+                player.DisplayStatus();
                 player.TakeAction(Terrains, CatCards);
             }
         }
@@ -101,22 +120,30 @@ class CatGame
 
     void EvaluateChallenge(string challenge)
     {
-        Player winner = challenge switch
+        var potentialWinners = Players.GroupBy(player =>
         {
-            "Most Collections" => Players.OrderByDescending(p => p.Collections).First(),
-            "Most Food" => Players.OrderByDescending(p => p.FoodCount).First(),
-            "Most Cards Placed" => Players.OrderByDescending(p => p.CardsPlaced).First(),
-            "Most Cards in Terrain 1" => Players.OrderByDescending(p => p.GetCardsInTerrain(0)).First(),
-            "Most Cards in Terrain 2" => Players.OrderByDescending(p => p.GetCardsInTerrain(1)).First(),
-            "Most Cards in Terrain 3" => Players.OrderByDescending(p => p.GetCardsInTerrain(2)).First(),
-            "Most Unplaced Cards" => Players.OrderByDescending(p => p.UnplacedCards).First(),
-            _ => null
-        };
+            return challenge switch
+            {
+                "Most Collections" => player.Collections,
+                "Most Food" => player.FoodCount,
+                "Most Cards Placed" => player.CardsPlaced,
+                "Most Cards in Terrain 1" => player.GetCardsInTerrain(0),
+                "Most Cards in Terrain 2" => player.GetCardsInTerrain(1),
+                "Most Cards in Terrain 3" => player.GetCardsInTerrain(2),
+                "Most Unplaced Cards" => player.UnplacedCards,
+                _ => 0
+            };
+        }).OrderByDescending(g => g.Key).FirstOrDefault();
 
-        if (winner != null)
+        if (potentialWinners == null || potentialWinners.Key == 0 || potentialWinners.Count() > 1)
         {
+            Console.WriteLine("It's a tie or no valid winner for this challenge. No points awarded.");
+        }
+        else
+        {
+            Player winner = potentialWinners.First();
             Console.WriteLine($"{winner.Name} wins this round's challenge: {challenge}!");
-            winner.AddScore(10); // Award points for winning the challenge
+            winner.AddScore(10);
         }
     }
 
@@ -142,6 +169,7 @@ class Player
     public int CardsPlaced { get; private set; }
     public int UnplacedCards { get; private set; }
     private Dictionary<int, int> TerrainCards;
+    private List<Card> Hand;
 
     public Player(string name)
     {
@@ -151,24 +179,161 @@ class Player
         Collections = 0;
         CardsPlaced = 0;
         UnplacedCards = 0;
-        TerrainCards = new Dictionary<int, int> { { 0, 0 }, { 1, 0 }, { 2, 0 } };
+        TerrainCards = new Dictionary<int, int> { { 0, 0 }, { 1, 0 }, { 2, 0 }, { 3, 0 }, { 4, 0 } };
+        Hand = new List<Card>();
     }
+
+    public void InitializeStartingResources(List<Card> catCards)
+    {
+        Random rnd = new Random();
+        FoodCount = 5;
+        Collections = 5;
+        for (int i = 0; i < 5; i++)
+        {
+            var card = catCards[rnd.Next(catCards.Count)];
+            Hand.Add(card);
+            catCards.Remove(card);
+        }
+
+        Console.WriteLine($"{Name}, choose 10 total resources to start: (Food, Collections, and Cards in Hand)");
+        AdjustStartingResources();
+        UpdateUnplacedCards();
+    }
+
+   private void AdjustStartingResources()
+{
+    while (true)
+    {
+        Console.WriteLine($"Current Resources - Food: {FoodCount}, Collections: {Collections}, Cards in Hand: {Hand.Count}");
+        
+        // Display cards in hand with details
+        if (Hand.Count > 0)
+        {
+            Console.WriteLine("Cards in Hand:");
+            foreach (var card in Hand)
+            {
+                Console.WriteLine($"Card ID: {card.ID}, Name: {card.Name}, Food Requirement: {card.FoodRequirement}");
+            }
+        }
+
+        Console.WriteLine("Choose an adjustment:");
+        Console.WriteLine("0 - Remove Food, 1 - Remove Collection, 2 - Remove Card, 4 - Add Food, 5 - Add Collection");
+
+        int adjustment = int.Parse(Console.ReadLine());
+        switch (adjustment)
+        {
+            case 0:
+                if (FoodCount > 0)
+                {
+                    FoodCount--;
+                    Console.WriteLine("Removed 1 Food.");
+                }
+                else
+                {
+                    Console.WriteLine("No food to remove.");
+                }
+                break;
+            case 1:
+                if (Collections > 0)
+                {
+                    Collections--;
+                    Console.WriteLine("Removed 1 Collection.");
+                }
+                else
+                {
+                    Console.WriteLine("No collections to remove.");
+                }
+                break;
+            case 2:
+                if (Hand.Count > 0)
+                {
+                    Console.WriteLine("Enter the ID of the card you want to remove:");
+                    int cardId = int.Parse(Console.ReadLine());
+                    var cardToRemove = Hand.FirstOrDefault(c => c.ID == cardId);
+                    if (cardToRemove != null)
+                    {
+                        Hand.Remove(cardToRemove);
+                        Console.WriteLine($"Removed Card ID: {cardId}, Name: {cardToRemove.Name}");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Invalid Card ID. Try again.");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("No cards to remove.");
+                }
+                break;
+            case 4:
+                if (FoodCount + Collections + Hand.Count < 10)
+                {
+                    FoodCount++;
+                    Console.WriteLine("Added 1 Food.");
+                }
+                else
+                {
+                    Console.WriteLine("Cannot exceed a total of 10 resources.");
+                }
+                break;
+            case 5:
+                if (FoodCount + Collections + Hand.Count < 10)
+                {
+                    Collections++;
+                    Console.WriteLine("Added 1 Collection.");
+                }
+                else
+                {
+                    Console.WriteLine("Cannot exceed a total of 10 resources.");
+                }
+                break;
+            default:
+                Console.WriteLine("Invalid choice. Try again.");
+                break;
+        }
+
+        if (FoodCount + Collections + Hand.Count == 10)
+        {
+            Console.WriteLine($"Final Resources - Food: {FoodCount}, Collections: {Collections}, Cards in Hand: {Hand.Count}");
+            Console.WriteLine("Your resources now sum to 10. Are you happy with this allocation? (yes/no)");
+            string confirmation = Console.ReadLine().ToLower();
+            if (confirmation == "yes")
+            {
+                break;
+            }
+            else
+            {
+                Console.WriteLine("Let's adjust your resources again.");
+            }
+        }
+        else
+        {
+            Console.WriteLine("Your total resources must sum to 10. Please adjust.");
+        }
+    }
+}
+
 
     public void TakeAction(Terrain[] terrains, List<Card> catCards)
     {
-        Console.WriteLine($"{Name}, choose an action: 0 - Place Cat, 1 - Get Food, 2 - Collect Stuff, 3 - Recruit Cats");
+        Console.WriteLine($"{Name}, your cards:");
+        foreach (var card in Hand)
+        {
+            Console.WriteLine($"Cat Name: {card.Name}, Card ID: {card.ID}, Food Requirement: {card.FoodRequirement}");
+        }
+        Console.WriteLine("Choose an action: 0 - Place Cat, 1 - Get Food, 2 - Collect Collections, 3 - Recruit Cats");
         int action = int.Parse(Console.ReadLine());
 
         switch (action)
         {
             case 0:
-                PlaceCat(terrains, catCards);
+                PlaceCat(terrains);
                 break;
             case 1:
                 GetFood();
                 break;
             case 2:
-                CollectStuff();
+                CollectCollections();
                 break;
             case 3:
                 RecruitCats(catCards);
@@ -180,14 +345,26 @@ class Player
         }
     }
 
-    void PlaceCat(Terrain[] terrains, List<Card> catCards)
+    public void DisplayStatus()
     {
+        Console.WriteLine($"Status for {Name}:");
+        Console.WriteLine($"Food: {FoodCount}, Collections: {Collections}, Cards Placed: {CardsPlaced}, Unplaced Cards: {UnplacedCards}");
+    }
+
+
+    void PlaceCat(Terrain[] terrains)
+    {
+        if (Hand.Count == 0)
+        {
+            Console.WriteLine("No more cards in hand to place.");
+            return;
+        }
+
         Console.WriteLine("Choose a terrain (0, 1, or 2):");
         int terrainIndex = int.Parse(Console.ReadLine());
         if (terrainIndex < 0 || terrainIndex >= terrains.Length)
         {
             Console.WriteLine("Invalid terrain. Try again.");
-            PlaceCat(terrains, catCards);
             return;
         }
 
@@ -198,44 +375,63 @@ class Player
             return;
         }
 
-        if (!catCards.Any())
+        Console.WriteLine("Choose a card to place (enter card ID):");
+        int cardId = int.Parse(Console.ReadLine());
+        var card = Hand.FirstOrDefault(c => c.ID == cardId);
+        if (card == null)
         {
-            Console.WriteLine("No more cats available to place.");
+            Console.WriteLine("Invalid card ID. Try again.");
             return;
         }
 
-        if (FoodCount < terrain.RequiredFood())
+        if (card.FoodRequirement > FoodCount)
         {
-            Console.WriteLine("Not enough food to place a cat here.");
+            Console.WriteLine("Not enough food to place this card. Try another action.");
             return;
         }
 
-        var catCard = catCards.First();
-        catCards.Remove(catCard);
-        terrain.PlaceCat(catCard);
-        FoodCount -= terrain.RequiredFood();
+        FoodCount -= card.FoodRequirement;
+        Hand.Remove(card);
+        terrain.AddCard(card);
         CardsPlaced++;
         TerrainCards[terrainIndex]++;
-        Console.WriteLine($"Placed Cat {catCard.ID} in Terrain {terrainIndex}.");
+        UpdateUnplacedCards();
+
+        Console.WriteLine($"Card {card.ID} placed in Terrain {terrainIndex}.");
     }
 
     void GetFood()
     {
-        FoodCount++;
-        Console.WriteLine("Collected 1 food.");
+        FoodCount += 2;
+        Console.WriteLine($"{Name} collected 2 food. Total food: {FoodCount}");
     }
 
-    void CollectStuff()
+    void CollectCollections()
     {
-        Collections++;
-        FoodCount += 1;
-        Console.WriteLine("Collected 1 stuff and gained 1 food.");
+        Collections += 1;
+        Console.WriteLine($"{Name} collected 1 collection. Total collections: {Collections}");
     }
 
     void RecruitCats(List<Card> catCards)
     {
-        Console.WriteLine("Recruiting new cats...");
-        UnplacedCards += 1;
+        if (catCards.Count == 0)
+        {
+            Console.WriteLine("No more cards available to recruit.");
+            return;
+        }
+
+        Random rnd = new Random();
+        var newCard = catCards[rnd.Next(catCards.Count)];
+        Hand.Add(newCard);
+        catCards.Remove(newCard);
+        UpdateUnplacedCards();
+
+        Console.WriteLine($"{Name} recruited a new cat card: Cat {newCard.ID} - Food Requirement: {newCard.FoodRequirement}");
+    }
+
+    public int GetCardsInTerrain(int terrainIndex)
+    {
+        return TerrainCards[terrainIndex];
     }
 
     public void AddScore(int points)
@@ -243,21 +439,21 @@ class Player
         Score += points;
     }
 
-    public int GetCardsInTerrain(int terrainIndex)
+    void UpdateUnplacedCards()
     {
-        return TerrainCards.ContainsKey(terrainIndex) ? TerrainCards[terrainIndex] : 0;
+        UnplacedCards = Hand.Count;
     }
 }
 
 class Card
 {
-    public string Type { get; private set; }
+    public string Name { get; private set; } // Added property
     public int ID { get; private set; }
     public int FoodRequirement { get; private set; }
 
-    public Card(string type, int id, int foodRequirement)
+    public Card(string name, int id, int foodRequirement)
     {
-        Type = type;
+        Name = name; // Initialize the property
         ID = id;
         FoodRequirement = foodRequirement;
     }
@@ -265,31 +461,28 @@ class Card
 
 class Terrain
 {
-    private int capacity;
-    private List<Card> placedCats;
+    private int MaxSlots;
+    private List<Card> PlacedCards;
+    public int CollectionRequirement { get; private set; } // Added property
 
-    public Terrain(int capacity)
+    public Terrain(int maxSlots, int collectionRequirement)
     {
-        this.capacity = capacity;
-        placedCats = new List<Card>();
+        MaxSlots = maxSlots;
+        CollectionRequirement = collectionRequirement; // Initialize the property
+        PlacedCards = new List<Card>();
     }
 
     public bool HasSpace()
     {
-        return placedCats.Count < capacity;
+        return PlacedCards.Count < MaxSlots;
     }
 
-    public void PlaceCat(Card cat)
+    public void AddCard(Card card)
     {
         if (HasSpace())
         {
-            placedCats.Add(cat);
+            PlacedCards.Add(card);
         }
-    }
-
-    public int RequiredFood()
-    {
-        return placedCats.Count + 1; // Food scales based on cats in the terrain
     }
 }
 
@@ -309,4 +502,3 @@ class Program
         game.StartGame();
     }
 }
-
