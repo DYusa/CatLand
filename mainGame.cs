@@ -23,7 +23,7 @@ class CatGame
     Stack<string> AvailableChallenges = new Stack<string>();
     List<Player> Players = new List<Player>();
     List<Card> CatCards = new List<Card>();
-    Terrain[] Terrains = new Terrain[5];
+    Terrain[] Terrains = new Terrain[4];
 
     public CatGame(int playerCount)
     {
@@ -61,7 +61,7 @@ class CatGame
     {
         for (int i = 0; i < 5; i++)
         {
-            Terrains[i] = new Terrain(TerrainSlots, i < 2 ? 0 : i < 4 ? 1 : 2); // Collection requirement: 0, 1, or 2
+            Terrains[i] = new Terrain(TerrainSlots, i < 2 ? 0 : i < 3 ? 1 : 2); // Collection requirement: 0, 1, or 2
         }
     }
 
@@ -504,21 +504,12 @@ class Program
 {
     static void Main(string[] args)
     {
-        int playerCount = 0;
-
-        while (true)
+        Console.WriteLine("Enter number of players (2, 3 or 4):");
+        int playerCount = int.Parse(Console.ReadLine());
+        if (playerCount < 2 || playerCount > 4)
         {
-            Console.WriteLine("Enter number of players (2 or 3):");
-            string input = Console.ReadLine();
-
-            if (int.TryParse(input, out playerCount) && (playerCount == 2 || playerCount == 3))
-            {
-                break; // Valid input, exit loop
-            }
-            else
-            {
-                Console.WriteLine("Invalid input. Please enter 2 or 3.");
-            }
+            Console.WriteLine("Invalid number of players. Defaulting to 1 for test.");
+            playerCount = 1;
         }
 
         CatGame game = new CatGame(playerCount);
