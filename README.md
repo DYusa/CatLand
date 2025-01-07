@@ -76,7 +76,7 @@ Represents a terrain where cards can be placed.
    git clone https://github.com/DYusa/CatLand.git
    cd catgame
    ```
-2. Open the project in your IDE of choice (e.g., Visual Studio).
+2. Open the project in your IDE of choice (e.g., Visual Studio). I personally used the console of Programiz (https://www.programiz.com/csharp-programming/online-compiler/).
 3. Build and run the project.
 4. Follow the prompts to specify the number of players and start the game.
 
