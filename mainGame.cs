@@ -504,24 +504,41 @@ class Program
 {
     static void Main(string[] args)
     {
-        int playerCount = 0;
-
-        while (true)
+        Console.WriteLine("Enter number of players (2, 3 or 4):");
+        int playerCount = int.Parse(Console.ReadLine());
+        if (playerCount < 2 || playerCount > 4)
         {
-            Console.WriteLine("Enter number of players (2 or 3):");
-            string input = Console.ReadLine();
-
-            if (int.TryParse(input, out playerCount) && (playerCount == 2 || playerCount == 3))
-            {
-                break; // Valid input, exit loop
-            }
-            else
-            {
-                Console.WriteLine("Invalid input. Please enter 2 or 3.");
-            }
+            Console.WriteLine("Invalid number of players. Defaulting to 1 for test.");
+            playerCount = 1;
         }
 
         CatGame game = new CatGame(playerCount);
         game.StartGame();
     }
 }
+
+// class Program
+// {
+//     static void Main(string[] args)
+//     {
+//         int playerCount = 0;
+
+//         while (true)
+//         {
+//             Console.WriteLine("Enter number of players (2 or 3):");
+//             string input = Console.ReadLine();
+
+//             if (int.TryParse(input, out playerCount) && (playerCount == 2 || playerCount == 3))
+//             {
+//                 break; // Valid input, exit loop
+//             }
+//             else
+//             {
+//                 Console.WriteLine("Invalid input. Please enter 2 or 3.");
+//             }
+//         }
+
+//         CatGame game = new CatGame(playerCount);
+//         game.StartGame();
+//     }
+// }
