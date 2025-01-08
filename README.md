@@ -84,6 +84,5 @@ Represents a terrain where cards can be placed.
 - Multiplayer support.
 - Save and load game state.
 - Point logic to be added.
-
 ---
 Enjoy playing CatGame! Feedback and contributions are welcome. Feel free to submit an issue or pull request on GitHub.
